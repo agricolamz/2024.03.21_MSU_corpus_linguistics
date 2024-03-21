@@ -1,0 +1,271 @@
+---
+title: "Корпусная лингвистика"
+subtitle: "для курса 'Качественные исследования религиозных сообществ'"
+author: 
+  - Г. А. Мороз
+date: "03/21/2024"
+date-format: "D.MM.YYYY"
+format: 
+  beamer:
+    theme: Singapore
+    mainfont: Brill
+    monofont: Iosevka
+    df-print: kable
+    pdf-engine: xelatex
+    cite-method: natbib
+    classoption: t
+    header-includes: |
+       \setbeamertemplate{footline}[page number]
+urlcolor: teal
+citecolor: teal
+echo: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+theme_set(theme_minimal()+theme(text = element_text(size = 16), legend.position = "bottom"))
+library(tidytext)
+```
+
+# Мифы о лингвистике
+
+## #тыжлингвист
+
+>- знает как правильно: писать, употреблять слова/выражения, ...
+>- умеет читать на всех письменностях мира
+>- знает все языки на свете
+>- умеет распознавать каждый язык на слух
+>- может рассказать о происхождении каждого слова
+>- не может разбираться в статистике и программировании
+>- \Large все перечисленное выше --- чушь
+
+## Лингвистика
+
+- прескриптивная \pause
+- вся остальная (дескриптивная)
+    - каталогизация языкового разнообразия, описание языковых контактов
+    - исследования и документация грамматики, фонетики и лексики конкретных языков
+    - исследования распределения грамматических/фонетических/лексических особенностей в языках мира
+    - исследования и документация исторических изменений грамматических/фонетических/лексических особенностей языков
+    - исследования когнитивных способностей человека и других животных, связанных с языком (усвоение, потеря языка и др.)
+    - языковые аспекты исследования мозга
+    - исследования в области синтеза и распознования речи и языка
+    - исследования в области NLP, пробинг языковых моделей и т. п.
+
+## Прескриптивная vs. дескриптивная лингвистика
+
+Запишите где-нибудь, что изображено на картинке (рис. Т. Пановой).
+
+```{r}
+#| fig-align: "center"
+
+knitr::include_graphics("images/01_ladle.jpg")
+```
+
+## Прескриптивная vs. дескриптивная лингвистика
+
+Это часть опроса И. Левина:
+
+```{r}
+#| out-width: 108%
+knitr::include_graphics("images/02_ladle_map.jpg")
+```
+
+# Корпусная лингвистика  
+
+## Корпусная лингвистика
+
+Корпусная лингвистика --- это область лингвистики, которая занимается исследованием языковых явлений на материале некоторых собраний языкового материала. В большинстве случаев это письменные тексты, однако это может быть аудио и даже видео корпуса.
+
+Среди корпусов русского языка можно назвать:
+
+- [Национальный корпус русского языка](https://ruscorpora.ru/)
+    - более 1.5 млрд слов
+    - много подкорпусов (газетный, устный, параллельный, диалектный, поэтический, исторические)
+- Google Books Ngram Viewer 
+- ...
+
+## *Отложить в ... ящик*
+
+```{r}
+#| eval: false
+
+library(ngramr)
+iz <- ngram(phrases = c("в долгий ящик", "в дальний ящик"), 
+            corpus = "ru-2019",
+            year_start = 1850)
+
+iz |>  
+  ggplot(aes(x = Year, y = Frequency, color = Phrase))+
+  geom_line()+
+  theme_google()+
+  labs(caption = "на основе Google Books Ngram Viewer",
+       x = NULL, y = "частотность", color = NULL)
+ggsave(filename = "images/03_google_n_gram.png", bg = "white", width = 9, height = 6)
+```
+
+\pause
+
+```{r}
+#| out-width: 108%
+knitr::include_graphics("images/03_google_n_gram.png")
+```
+
+## Билингвальные [корпуса Международной лаборатории языковой конвергенции](http://lingconlab.ru/)
+
+```{r}
+#| eval: false
+
+read_tsv("https://raw.githubusercontent.com/LingConLab/LABsite_qmd/main/data.tsv") |> 
+  filter(subtype == "bilingual") |> 
+  distinct(name_ru, n_tokens) |> 
+  mutate(name_ru = str_c(name_ru, "\n", formatC(n_tokens, format="f", big.mark=",", digits=0), " ток.")) |> 
+  arrange(-n_tokens) |> 
+  ggplot(aes(area = n_tokens, label = name_ru))+
+  geom_treemap(fill = "white", color = "black", size = 5) +
+  geom_treemap_text()
+
+ggsave(filename = "images/04_bilingual_corpora.png", bg = "white", width = 9, height = 7)
+```
+
+```{r}
+#| out-height: 92%
+#| fig-align: center
+
+knitr::include_graphics("images/04_bilingual_corpora.png")
+```
+
+## Исследования 
+
+- исследование числительных [Naccarato, Moroz forthcoming]
+    - *Пешком ходил Верхний Дженгутай **пять километра**.* (дагестанский русский)
+    - *Этот меньше, после **двое аборт** делала одну.* (марийский русский)
+- выпадение предлогов [Yakovleva, Koshelyuk, Moroz in preparation]
+    - *Со второго курса что ли практика началась, _ больнице.* (марийский русский)
+    - *Вот, отремонтировал _ трудом пополам, китайские часы -то.* (бесермянский русский)
+    - *я пошёл, _ начальнику дал предложение.* (бесермянский русский)
+    
+## Моделирование
+
+Мы запустили иерархическую логистическую регрессию со смешанными эффектами, предсказывая **вероятность нестандартной формы количественной конструкции**
+
+- основные эффекты
+    - коллокационность ***
+    - тип числительного ***
+    - образование *
+    - год рождения *
+- случайные эффекты
+    - носитель вложен в первый язык
+
+## Предсказания модели
+
+```{r}
+#| out-height: 90%
+knitr::include_graphics("images/05_model_prediction_by_dice_coefficient_education_num_type.png")
+```
+
+# Digital Humanities
+
+## Digital Humanities
+
+Это направление цифровых гуманитарных исследований, которое сложно хорошо очертить: они скорее объединены методом. Мы поговорим про два аспекта, которые относят к DH:
+
+- определение авторства
+- дальнее чтение (distant reading)
+
+## Греческий корпус из [тг канала О. В. Алиевой](https://t.me/rantiquity) 
+
+```{r}
+#| out-height: 100%
+#| fig-align: center
+
+knitr::include_graphics("images/06_greek_authors.jpg")
+```
+
+## 30 статей из Известий ЮФУ. Филологические науки (2022-2023)
+
+```{r}
+#| eval: false
+library(tidyverse)
+t <- map(list.files("/home/agricolamz/work/other_projects/rostov/articles_txt/", full.names = TRUE), read_lines)
+
+library(stopwords)
+
+map(stopwords_getsources()[-c(3:4, 6, 8)], function(i){
+  print(i)
+  stopwords(language = "ru", source = i)
+}) |> 
+  unlist() |> 
+  unique() |> 
+  sort() ->
+  stopwords_ru
+stopwords_ru <- c(stopwords_ru, "дата", "обращения", "канд", "филол", "наук",
+                  "дис", "канд", "южного", "федерального", "университета", "гос",
+                  "ун", "список", "источников", "научная", "статья", "известия", 
+                  "юфу", "др", "филологические", "науки", "ключевые", "слова",
+                  "электронный", "ресурс", "боева", "мелькаева")
+
+library(tidytext)
+t |> 
+  unlist() |> 
+  tibble(text = _) |> 
+  unnest_tokens(input = text, output = "word") |> 
+  count(word, sort = TRUE) |> 
+  filter(str_detect(word, "[А-я]"),
+         str_length(word) > 1) |> 
+  anti_join(tibble(word = stopwords_ru)) |> 
+  mutate(word = fct_reorder(word, n)) |>
+  slice(1:20) |> 
+  ggplot(aes(n, word))+
+  geom_col()+
+  theme_minimal()+
+  labs(y = "", x = "", caption = "пришлось добавить в стоп-слова: дата, обращения, канд, филол, наук, дис, канд,\nюжного, федерального, университета, гос, ун, список, источников, научная, статья,\nизвестия, юфу, др, филологические, науки, ключевые, слова, электронный, ресурс")
+
+ggsave(filename = "images/07_yu_fu_unigram.png", bg = "white", width = 7, height = 5)
+```
+
+```{r}
+#| out-height: 85%
+#| fig-align: center
+
+knitr::include_graphics("images/07_yu_fu_unigram.png")
+```
+
+
+## 30 статей из Известий ЮФУ. Филологические науки (2022-2023)
+
+```{r}
+#| eval: false
+
+t |> 
+  unlist() |> 
+  tibble(text = _) |> 
+  unnest_tokens(input = text, output = "bigram", token = "ngrams", n = 2) |> 
+  count(bigram, sort = TRUE) |> 
+  filter(!str_detect(bigram, "[A-z]"),
+         !str_detect(bigram, "\\d"),
+         !str_detect(bigram, "\\."),
+         str_detect(bigram, "[А-я]")) |> 
+  separate(bigram, into = c("word1", "word2"), sep = " ") |> 
+  anti_join(tibble(word1 = stopwords_ru)) |> 
+  anti_join(tibble(word2 = stopwords_ru)) |>
+  mutate(bigram = str_c(word1, " ", word2)) |> 
+  mutate(bigram = fct_reorder(bigram, n)) |>
+  slice(1:20) |> 
+  ggplot(aes(n, bigram))+
+  geom_col()+
+  theme_minimal()+
+  labs(y = "", x = "", caption = "пришлось добавить в стоп-слова: дата, обращения, канд, филол, наук, дис, канд,\nюжного, федерального, университета, гос, ун, список, источников, научная, статья,\nизвестия, юфу, др, филологические, науки, ключевые, слова, электронный, ресурс")
+
+ggsave(filename = "images/08_yu_fu_bigram.png", bg = "white", width = 7, height = 5)
+```
+
+```{r}
+#| out-height: 85%
+#| fig-align: center
+
+knitr::include_graphics("images/08_yu_fu_bigram.png")
+```
